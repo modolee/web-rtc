@@ -12,6 +12,7 @@ import { WebSocket } from 'ws';
 @WebSocketGateway({ transports: ['websocket'] })
 export class ChatEventGateway implements OnModuleInit, OnGatewayConnection {
   private port: number;
+  private sockets: WebSocket[] = [];
 
   constructor(private readonly configService: ConfigService) {}
 
@@ -19,19 +20,28 @@ export class ChatEventGateway implements OnModuleInit, OnGatewayConnection {
     this.port = this.configService.get<number>('PORT');
   }
 
-  handleConnection(socket: WebSocket, ...args: any[]) {
-    socket.send('Hello client');
+  handleConnection(@ConnectedSocket() socket: WebSocket, ...args: any[]) {
+    console.log('Client connected ✅');
+    this.sockets.push(socket);
   }
 
   @SubscribeMessage('message')
-  handleMessage(socket: WebSocket, data: string) {
-    console.log({ data });
-    return data;
+  handleMessage(
+    @ConnectedSocket() connectedSocket: WebSocket,
+    @MessageBody() data: string,
+  ) {
+    console.log(`Message from client: ${data}`);
+    this.sockets.forEach((socket) =>
+      socket.send(JSON.stringify({ event: 'message', data })),
+    );
   }
 
   @SubscribeMessage('join')
-  handleJoin(@MessageBody() data: any, @ConnectedSocket() socket: WebSocket) {
-    console.log({ socket });
-    return data;
+  handleJoin(
+    @ConnectedSocket() connectedSocket: WebSocket,
+    @MessageBody() data: any,
+  ) {
+    console.log(`${data.name} joined`);
+    return { event: 'join', data: `Hello ${data.name}` };
   }
 }

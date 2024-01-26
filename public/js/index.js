@@ -1,10 +1,15 @@
-const webSocket = new WebSocket(`ws://${window.location.host}`, ['websoket']);
+import * as ws from './ws.js';
 
-webSocket.addEventListener('open', (event) => {
-  console.log('Web Socket opened');
-  webSocket.send(JSON.stringify({ event: 'message', data: 'Hello Server' }));
-});
+const messageList = document.querySelector('ul');
+const messageForm = document.querySelector('form');
 
-webSocket.addEventListener('message', (event) => {
-  console.log('Message from server ', event.data);
-});
+const handleSubmit = (event) => {
+  event.preventDefault();
+  const input = messageForm.querySelector('input');
+  ws.sendMessage(input.value);
+  input.value = '';
+};
+
+messageForm.addEventListener('submit', handleSubmit);
+
+ws.registerWebSocketListener();
