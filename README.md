@@ -1,3 +1,3 @@
-# Web RTC Practice
+# WebSocket & WebRTC Practice
 
-Web RTC 연습
+WebSocket & WebRTC 연습
