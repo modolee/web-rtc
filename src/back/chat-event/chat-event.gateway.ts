@@ -7,6 +7,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
 } from '@nestjs/websockets';
+import { getRandomNickname } from 'src/helpers/nickname.helper';
 import { WebSocket } from 'ws';
 
 @WebSocketGateway({ transports: ['websocket'] })
@@ -25,23 +26,44 @@ export class ChatEventGateway implements OnModuleInit, OnGatewayConnection {
     this.sockets.push(socket);
   }
 
+  @SubscribeMessage('join')
+  handleJoin(@ConnectedSocket() connectedSocket: WebSocket) {
+    const nickname = getRandomNickname();
+    connectedSocket['user'] = { nickname };
+    console.log(`${nickname} joined`);
+    return { event: 'join', data: `Hello ${nickname}` };
+  }
+
+  @SubscribeMessage('nickname')
+  handleNickname(
+    @ConnectedSocket() connectedSocket: WebSocket,
+    @MessageBody() nickname: string,
+  ) {
+    console.log(`${nickname} got a nickname`);
+    connectedSocket['user'] = { nickname };
+    return {
+      event: 'nickname',
+      data: nickname,
+    };
+  }
+
   @SubscribeMessage('message')
   handleMessage(
     @ConnectedSocket() connectedSocket: WebSocket,
-    @MessageBody() data: string,
+    @MessageBody() message: string,
   ) {
-    console.log(`Message from client: ${data}`);
+    console.log(`Message from client: ${message}`);
     this.sockets.forEach((socket) =>
-      socket.send(JSON.stringify({ event: 'message', data })),
+      socket.send(
+        JSON.stringify({
+          event: 'message',
+          data: {
+            nickname: connectedSocket['user']?.nickname,
+            message,
+            mine: connectedSocket === socket,
+          },
+        }),
+      ),
     );
-  }
-
-  @SubscribeMessage('join')
-  handleJoin(
-    @ConnectedSocket() connectedSocket: WebSocket,
-    @MessageBody() data: any,
-  ) {
-    console.log(`${data.name} joined`);
-    return { event: 'join', data: `Hello ${data.name}` };
   }
 }

@@ -1,15 +1,21 @@
-import * as ws from './ws.js';
+import { addEventListenerForActions } from './sender.js';
+import { addEventListenerForWebSocket } from './listener.js';
 
-const messageList = document.querySelector('ul');
-const messageForm = document.querySelector('form');
+export const webSocket = new WebSocket(`ws://${window.location.host}`, [
+  'websoket',
+]);
 
-const handleSubmit = (event) => {
-  event.preventDefault();
-  const input = messageForm.querySelector('input');
-  ws.sendMessage(input.value);
-  input.value = '';
+export const sendEvent = (event, data) => {
+  webSocket.send(JSON.stringify({ event, data }));
 };
 
-messageForm.addEventListener('submit', handleSubmit);
+export const sendMessage = (msg) => {
+  sendEvent('message', msg);
+};
 
-ws.registerWebSocketListener();
+const main = () => {
+  addEventListenerForActions();
+  addEventListenerForWebSocket();
+};
+
+main();
